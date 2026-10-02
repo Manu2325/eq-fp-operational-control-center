@@ -1,0 +1,49 @@
+/* Estilos personalizados para la tabla agrupada */
+.campaign-banner {
+    background-color: #FFA500;
+    color: white;
+    font-weight: bold;
+    padding: 0.75rem 1rem;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    background-color: #E2E8F0;
+    color: #0F172A;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    padding: 0.5rem 0.75rem;
+    text-align: right;
+}
+
+.data-table th:first-child {
+    text-align: left;
+}
+
+.data-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #E2E8F0;
+    font-size: 0.875rem;
+    text-align: right;
+}
+
+.data-table td:first-child {
+    text-align: left;
+    font-weight: 500;
+}
+
+.data-table tr:nth-child(even) {
+    background-color: #F8FAFC;
+}
+
+.data-table tr.total-row {
+    font-weight: bold;
+    background-color: #F1F5F9;
+    border-top: 2px solid #94A3B8;
+}
