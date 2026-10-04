@@ -203,7 +203,8 @@ function renderConsolidatedView(campaignsData, totalAgents) {
             tableHtml += `<tr class="${rowClass}">`;
             row.forEach((cell, colIdx) => {
                 const alignClass = colIdx === 0 ? 'text-left font-semibold' : 'text-right';
-                const conditionalStyle = isTotal ? '' : getConditionalFormatting(cell, colIdx, header);
+                // Dentro del loop de filas de renderConsolidatedView:
+                const conditionalStyle = isTotal ? '' : getConditionalFormatting(cell, colIdx, header, c.name);
                 
                 tableHtml += `<td class="p-3 border-r border-slate-800/40 ${alignClass}" style="${conditionalStyle}">${cell !== undefined ? cell : ''}</td>`;
             });
@@ -221,7 +222,7 @@ function renderConsolidatedView(campaignsData, totalAgents) {
     });
 }
 
-function getConditionalFormatting(val, colIdx, headerRow) {
+function getConditionalFormatting(val, colIdx, headerRow, campaignName = '') {
     if (!val || colIdx === 0) return '';
 
     const colName = (headerRow[colIdx] || '').toString().toUpperCase();
@@ -229,6 +230,7 @@ function getConditionalFormatting(val, colIdx, headerRow) {
 
     if (isNaN(cleanVal)) return '';
 
+    // Productividad, Conversión y RPC Rate
     if (colName.includes('PRODUCTIVITY') || colName.includes('CONVERSION') || colName.includes('RPC RATE')) {
         if (cleanVal >= 70) {
             return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;';
@@ -239,6 +241,7 @@ function getConditionalFormatting(val, colIdx, headerRow) {
         }
     }
 
+    // Wrap Up Time
     if (colName.includes('WRAP')) {
         if (cleanVal <= 25) {
             return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;';
@@ -249,13 +252,29 @@ function getConditionalFormatting(val, colIdx, headerRow) {
         }
     }
 
+    // Promises Per Hour (PPH) según LOB
     if (colName.includes('PROMISES') || colName.includes('PPH')) {
-        if (cleanVal >= 5.0) {
-            return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;';
-        } else if (cleanVal >= 3.0) {
-            return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;';
+        const campaignUpper = campaignName.toUpperCase();
+        const isCRC = campaignUpper.includes('CRC_QC') && !campaignUpper.includes('CRCC');
+
+        if (isCRC) {
+            // Parámetros para CRC_QC (Comcast Equipment)
+            if (cleanVal >= 5.0) {
+                return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;';
+            } else if (cleanVal >= 3.0) {
+                return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;';
+            } else {
+                return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;';
+            }
         } else {
-            return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;';
+            // Parámetros para las otras LOBs (CRCC_QC, Earthlink_QC, Optimum_QC)
+            if (cleanVal >= 2.0) {
+                return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;'; // Verde (> 2)
+            } else if (cleanVal >= 1.0) {
+                return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;'; // Amarillo (1.0 a 1.9)
+            } else {
+                return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;'; // Rojo (< 0.9 / < 1.0)
+            }
         }
     }
 
