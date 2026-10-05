@@ -230,14 +230,25 @@ function getConditionalFormatting(val, colIdx, headerRow, campaignName = '') {
 
     if (isNaN(cleanVal)) return '';
 
-    // Productividad, Conversión y RPC Rate
-    if (colName.includes('PRODUCTIVITY') || colName.includes('CONVERSION') || colName.includes('RPC RATE')) {
+    // Productividad y Conversión
+    if (colName.includes('PRODUCTIVITY') || colName.includes('CONVERSION')) {
         if (cleanVal >= 70) {
             return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;';
         } else if (cleanVal >= 50) {
             return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;';
         } else {
             return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;';
+        }
+    }
+
+    // RPC Rate (%) - Umbrales para todos los LOBs
+    if (colName.includes('RPC RATE')) {
+        if (cleanVal > 30) {
+            return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;'; // Verde (> 30%)
+        } else if (cleanVal >= 20) {
+            return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;'; // Amarillo (20% a 29% / 30%)
+        } else {
+            return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;'; // Rojo (0% a 19%)
         }
     }
 
@@ -269,11 +280,11 @@ function getConditionalFormatting(val, colIdx, headerRow, campaignName = '') {
         } else {
             // Parámetros para las otras LOBs (CRCC_QC, Earthlink_QC, Optimum_QC)
             if (cleanVal >= 2.0) {
-                return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;'; // Verde (> 2)
+                return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;';
             } else if (cleanVal >= 1.0) {
-                return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;'; // Amarillo (1.0 a 1.9)
+                return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;';
             } else {
-                return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;'; // Rojo (< 0.9 / < 1.0)
+                return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;';
             }
         }
     }
