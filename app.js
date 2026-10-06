@@ -1,13 +1,24 @@
 let currentSection = 'daily';
 let activeDirectory = new Set();
+let autoRefreshTimer = null;
+const REFRESH_INTERVAL_MS = 15 * 60 * 1000; // Auto-refresco cada 15 minutos
 
 document.addEventListener('DOMContentLoaded', () => {
     initDashboard();
+    startAutoRefresh();
 });
 
 async function initDashboard() {
     await loadDirectoryData();
     switchSection('daily');
+}
+
+function startAutoRefresh() {
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    autoRefreshTimer = setInterval(() => {
+        console.log(`[Auto-Refresh TV] Actualizando métricas automáticamente (${new Date().toLocaleTimeString()})...`);
+        refreshCurrentView();
+    }, REFRESH_INTERVAL_MS);
 }
 
 function cleanId(id) {
@@ -161,7 +172,6 @@ function countAgents(rows) {
     return count;
 }
 
-// Render para Daily, Weekly y MTD
 function renderConsolidatedView(campaignsData, totalAgents) {
     const kpiEl = document.getElementById('kpi-total-agents');
     if (kpiEl) kpiEl.textContent = totalAgents;
@@ -203,7 +213,6 @@ function renderConsolidatedView(campaignsData, totalAgents) {
             tableHtml += `<tr class="${rowClass}">`;
             row.forEach((cell, colIdx) => {
                 const alignClass = colIdx === 0 ? 'text-left font-semibold' : 'text-right';
-                // Dentro del loop de filas de renderConsolidatedView:
                 const conditionalStyle = isTotal ? '' : getConditionalFormatting(cell, colIdx, header, c.name);
                 
                 tableHtml += `<td class="p-3 border-r border-slate-800/40 ${alignClass}" style="${conditionalStyle}">${cell !== undefined ? cell : ''}</td>`;
@@ -241,12 +250,12 @@ function getConditionalFormatting(val, colIdx, headerRow, campaignName = '') {
         }
     }
 
-    // RPC Rate (%) - Umbrales para todos los LOBs
+    // RPC Rate (%) para TODOS los LOBs
     if (colName.includes('RPC RATE')) {
         if (cleanVal > 30) {
             return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;'; // Verde (> 30%)
         } else if (cleanVal >= 20) {
-            return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;'; // Amarillo (20% a 29% / 30%)
+            return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;'; // Amarillo (20% a 29%)
         } else {
             return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;'; // Rojo (0% a 19%)
         }
@@ -292,19 +301,6 @@ function getConditionalFormatting(val, colIdx, headerRow, campaignName = '') {
     return '';
 }
 
-function getCssColor(colorObj, defaultColor = '') {
-    if (!colorObj) return defaultColor;
-    const rgb = colorObj.rgbColor || colorObj;
-    if (rgb.red === undefined && rgb.green === undefined && rgb.blue === undefined) {
-        return defaultColor;
-    }
-    const r = Math.round((rgb.red || 0) * 255);
-    const g = Math.round((rgb.green || 0) * 255);
-    const b = Math.round((rgb.blue || 0) * 255);
-    return `rgb(${r}, ${g}, ${b})`;
-}
-
-// Cargar Pestañas Maestras
 async function loadMasterSheetTab(sectionKey) {
     const tabMap = {
         'productivity': 'Productivity',
@@ -373,10 +369,7 @@ function renderMasterTableWithStyles(title, rowData) {
     const container = document.getElementById('sheet-view-container');
     if (!container) return;
 
-    // Detectamos si es Commissions para forzar ajuste responsivo en un solo cuadro
     const isCommissions = title.toLowerCase().includes('commissions');
-    
-    // Si es commissions, usamos table-fixed para forzar que quepa en pantalla sin scroll
     const tableLayoutClass = isCommissions ? 'table-fixed w-full' : 'w-full';
     const textSize = isCommissions ? 'text-[10px]' : 'text-xs';
     const cellPadding = isCommissions ? 'px-1 py-1.5' : 'p-3';
@@ -427,7 +420,6 @@ function renderMasterTableWithStyles(title, rowData) {
 
             let styleAttr = '';
 
-            // En Commissions permitimos que los textos largos rompan en varias líneas para ajustar el ancho
             let wrapClass = '';
             if (isCommissions) {
                 wrapClass = 'whitespace-normal break-words text-center leading-tight';
@@ -471,4 +463,5 @@ function renderMasterTableWithStyles(title, rowData) {
 
 function refreshCurrentView() {
     switchSection(currentSection);
+    startAutoRefresh();
 }
