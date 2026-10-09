@@ -200,7 +200,7 @@ function renderConsolidatedView(campaignsData, totalAgents) {
             <div class="custom-scroll overflow-x-auto">
                 <table class="w-full text-xs text-left border-collapse">
                     <thead class="bg-slate-950/80 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[11px]">
-                        <tr>${header.map(h => `<th class="p-3 border-r border-slate-800/60 text-center">${h || ''}</th>`).join('')}</tr>
+                        <tr>${header.map(h => `<th class="p-3 border-r border-slate-800/60 text-center">\${h || ''}</th>`).join('')}</tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800/40">
         `;
@@ -235,7 +235,7 @@ function getConditionalFormatting(val, colIdx, headerRow, campaignName = '') {
     if (!val || colIdx === 0) return '';
 
     const colName = (headerRow[colIdx] || '').toString().toUpperCase();
-    const cleanVal = parseFloat(val.toString().replace(/[%$,]/g, '').trim());
+    const cleanVal = parseFloat(val.toString().replace(/[%\$,]/g, '').trim());
 
     if (isNaN(cleanVal)) return '';
 
@@ -343,19 +343,23 @@ async function loadMasterSheetTab(sectionKey) {
             throw new Error(`No se encontró ninguna pestaña que coincida con "${targetKeyword}" en el Libro Maestro.`);
         }
 
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${masterId}?ranges=${encodeURIComponent(targetTabName)}!A1:AK100&includeGridData=true&key=${apiKey}`;
+        // Ampliamos el rango de lectura a A1:AK500 para cubrir más registros sin límite rígido de 100
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${masterId}?ranges=${encodeURIComponent(targetTabName)}!A1:AK500&includeGridData=true&key=${apiKey}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Status ${res.status}: Revisa que la pestaña "${targetTabName}" esté accesible.`);
         
         const json = await res.json();
-        const sheetData = json.sheets?.[0]?.data?.[0]?.rowData;
+        const gridData = json.sheets?.[0]?.data?.[0];
+        const rowData = gridData?.rowData || [];
+        const rowMetadata = gridData?.rowMetadata || [];
 
-        if (!sheetData || sheetData.length === 0) {
+        if (rowData.length === 0) {
             container.innerHTML = `<div class="p-8 bg-slate-900 border border-slate-800 rounded-2xl text-slate-400 text-center text-xs">Sin información disponible en "${targetTabName}".</div>`;
             return;
         }
 
-        renderMasterTableWithStyles(targetTabName, sheetData);
+        // Pasamos tanto rowData como rowMetadata a la función de renderizado
+        renderMasterTableWithStyles(targetTabName, rowData, rowMetadata);
     } catch (err) {
         if (container) {
             container.innerHTML = `<div class="bg-rose-950/40 border border-rose-800/50 text-rose-300 p-4 rounded-xl text-xs">Error al cargar la pestaña: ${err.message}</div>`;
@@ -365,7 +369,7 @@ async function loadMasterSheetTab(sectionKey) {
     }
 }
 
-function renderMasterTableWithStyles(title, rowData) {
+function renderMasterTableWithStyles(title, rowData, rowMetadata = []) {
     const container = document.getElementById('sheet-view-container');
     if (!container) return;
 
@@ -395,6 +399,13 @@ function renderMasterTableWithStyles(title, rowData) {
     `;
 
     rowData.forEach((row, rowIndex) => {
+        // FILTRADO DE FILAS OCULTAS
+        const meta = rowMetadata[rowIndex] || {};
+        const isHidden = meta.hiddenByFilter || meta.hiddenDimension;
+
+        // Si la fila está oculta manualmente o por filtro, SE OMITE
+        if (isHidden) return;
+
         const cells = row.values || [];
         if (cells.length === 0 || cells.every(c => !c.formattedValue)) return;
 
