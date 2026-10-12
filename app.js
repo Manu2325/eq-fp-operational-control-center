@@ -186,12 +186,16 @@ function renderConsolidatedView(campaignsData, totalAgents) {
         const tableCard = document.createElement('div');
         tableCard.className = "bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-800 shadow-xl overflow-hidden";
 
-        const header = c.rows[0];
+        const headerRow = c.rows[0] || [];
         const bodyRows = c.rows.slice(1);
-        const headerTitle = `${c.name}${c.sheetTitle || ''}`;
+        const headerTitle = c.name + (c.sheetTitle || '');
 
-        // Generamos las celdas del header usando concatenación limpia
-        const headerCellsHtml = header.map(h => `<th class="p-3 border-r border-slate-800/60 text-center">${h || ''}</th>`).join('');
+        // CONSTRUCCIÓN SEGURA DE ENCABEZADOS SIN USAR INTERPOLACIÓN PROPENSAS A ERRORES
+        let headerThs = '';
+        for (let j = 0; j < headerRow.length; j++) {
+            const colVal = (headerRow[j] !== undefined && headerRow[j] !== null) ? headerRow[j].toString().trim() : '';
+            headerThs += '<th class="p-3 border-r border-slate-800/60 text-center whitespace-nowrap">' + (colVal !== '' ? colVal : '') + '</th>';
+        }
 
         let tableHtml = `
             <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-800 px-6 py-3 flex justify-between items-center">
@@ -203,7 +207,7 @@ function renderConsolidatedView(campaignsData, totalAgents) {
             <div class="custom-scroll overflow-x-auto">
                 <table class="w-full text-xs text-left border-collapse">
                     <thead class="bg-slate-950/80 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[11px]">
-                        <tr>${headerCellsHtml}</tr>
+                        <tr>${headerThs}</tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800/40">
         `;
@@ -214,12 +218,16 @@ function renderConsolidatedView(campaignsData, totalAgents) {
             const rowClass = isTotal ? 'font-bold bg-slate-800/70 text-amber-300 border-t-2 border-slate-700' : 'hover:bg-slate-800/30 transition-colors text-slate-200';
 
             tableHtml += `<tr class="${rowClass}">`;
-            row.forEach((cell, colIdx) => {
-                const alignClass = colIdx === 0 ? 'text-left font-semibold' : 'text-right';
-                const conditionalStyle = isTotal ? '' : getConditionalFormatting(cell, colIdx, header, c.name);
+            
+            // Garantizamos que cada celda de datos se alinee con los encabezados
+            for (let k = 0; k < headerRow.length; k++) {
+                const cellVal = row[k] !== undefined ? row[k] : '';
+                const alignClass = k === 0 ? 'text-left font-semibold' : 'text-right';
+                const conditionalStyle = isTotal ? '' : getConditionalFormatting(cellVal, k, headerRow, c.name);
                 
-                tableHtml += `<td class="p-3 border-r border-slate-800/40 ${alignClass}" style="${conditionalStyle}">${cell !== undefined ? cell : ''}</td>`;
-            });
+                tableHtml += `<td class="p-3 border-r border-slate-800/40 ${alignClass}" style="${conditionalStyle}">${cellVal}</td>`;
+            }
+            
             tableHtml += `</tr>`;
         });
 
@@ -346,7 +354,6 @@ async function loadMasterSheetTab(sectionKey) {
             throw new Error(`No se encontró ninguna pestaña que coincida con "${targetKeyword}" en el Libro Maestro.`);
         }
 
-        // Ampliamos el rango de lectura a A1:AK500 para cubrir más registros sin límite rígido de 100
         const url = `https://sheets.googleapis.com/v4/spreadsheets/${masterId}?ranges=${encodeURIComponent(targetTabName)}!A1:AK500&includeGridData=true&key=${apiKey}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Status ${res.status}: Revisa que la pestaña "${targetTabName}" esté accesible.`);
@@ -361,7 +368,6 @@ async function loadMasterSheetTab(sectionKey) {
             return;
         }
 
-        // Pasamos tanto rowData como rowMetadata a la función de renderizado
         renderMasterTableWithStyles(targetTabName, rowData, rowMetadata);
     } catch (err) {
         if (container) {
@@ -402,11 +408,9 @@ function renderMasterTableWithStyles(title, rowData, rowMetadata = []) {
     `;
 
     rowData.forEach((row, rowIndex) => {
-        // FILTRADO DE FILAS OCULTAS
         const meta = rowMetadata[rowIndex] || {};
         const isHidden = meta.hiddenByFilter || meta.hiddenDimension;
 
-        // Si la fila está oculta manualmente o por filtro, SE OMITE
         if (isHidden) return;
 
         const cells = row.values || [];
