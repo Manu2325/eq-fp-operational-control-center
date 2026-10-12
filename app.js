@@ -190,6 +190,9 @@ function renderConsolidatedView(campaignsData, totalAgents) {
         const bodyRows = c.rows.slice(1);
         const headerTitle = `${c.name}${c.sheetTitle || ''}`;
 
+        // Generamos las celdas del header usando concatenación limpia
+        const headerCellsHtml = header.map(h => `<th class="p-3 border-r border-slate-800/60 text-center">${h || ''}</th>`).join('');
+
         let tableHtml = `
             <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-800 px-6 py-3 flex justify-between items-center">
                 <div class="flex items-center gap-2">
@@ -200,7 +203,7 @@ function renderConsolidatedView(campaignsData, totalAgents) {
             <div class="custom-scroll overflow-x-auto">
                 <table class="w-full text-xs text-left border-collapse">
                     <thead class="bg-slate-950/80 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[11px]">
-                        <tr>${header.map(h => `<th class="p-3 border-r border-slate-800/60 text-center">\${h || ''}</th>`).join('')}</tr>
+                        <tr>${headerCellsHtml}</tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800/40">
         `;
