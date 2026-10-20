@@ -354,7 +354,10 @@ async function loadMasterSheetTab(sectionKey) {
             throw new Error(`No se encontró ninguna pestaña que coincida con "${targetKeyword}" en el Libro Maestro.`);
         }
 
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${masterId}?ranges=${encodeURIComponent(targetTabName)}!A1:AK500&includeGridData=true&key=${apiKey}`;
+        // Si la sección es Productivity, limitamos el rango estrictamente a la fila 38
+        const rangeSpec = (sectionKey === 'productivity') ? 'A1:AK38' : 'A1:AK500';
+
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${masterId}?ranges=${encodeURIComponent(targetTabName)}!${rangeSpec}&includeGridData=true&key=${apiKey}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Status ${res.status}: Revisa que la pestaña "${targetTabName}" esté accesible.`);
         
