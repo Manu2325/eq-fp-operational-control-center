@@ -250,8 +250,38 @@ function getConditionalFormatting(val, colIdx, headerRow, campaignName = '') {
 
     if (isNaN(cleanVal)) return '';
 
-    // Productividad y Conversión
-    if (colName.includes('PRODUCTIVITY') || colName.includes('CONVERSION')) {
+    // ==========================================
+    // CONVERSION RATE % (REGLAS ACTUALIZADAS)
+    // ==========================================
+    if (colName.includes('CONVERSION') || colName.includes('CONVERSION RATE') || colName.includes('CONV %')) {
+        const campaignUpper = campaignName.toUpperCase();
+        
+        // Identificar si la campaña es EQ (CRC_QC - Comcast Equipment)
+        const isEQ = campaignUpper.includes('CRC_QC') && !campaignUpper.includes('CRCC');
+
+        if (isEQ) {
+            // EQ Stats: Verde > 60% | Amarillo 30% - 59% | Rojo 0% - 29%
+            if (cleanVal >= 60) {
+                return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;'; // Verde
+            } else if (cleanVal >= 30) {
+                return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;'; // Amarillo
+            } else {
+                return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;'; // Rojo
+            }
+        } else {
+            // CRCC Stats, Earthlink Stats y Optimum Stats: Verde > 40% | Amarillo 20% - 39% | Rojo 0% - 19%
+            if (cleanVal >= 40) {
+                return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;'; // Verde
+            } else if (cleanVal >= 20) {
+                return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;'; // Amarillo
+            } else {
+                return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;'; // Rojo
+            }
+        }
+    }
+
+    // Productividad general (si no es Conversion Rate)
+    if (colName.includes('PRODUCTIVITY')) {
         if (cleanVal >= 70) {
             return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;';
         } else if (cleanVal >= 50) {
@@ -264,11 +294,11 @@ function getConditionalFormatting(val, colIdx, headerRow, campaignName = '') {
     // RPC Rate (%) para TODOS los LOBs
     if (colName.includes('RPC RATE')) {
         if (cleanVal > 30) {
-            return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;'; // Verde (> 30%)
+            return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;';
         } else if (cleanVal >= 20) {
-            return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;'; // Amarillo (20% a 29%)
+            return 'background-color: rgba(245, 158, 11, 0.18); color: #fbbf24; font-weight: 700;';
         } else {
-            return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;'; // Rojo (0% a 19%)
+            return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;';
         }
     }
 
@@ -289,7 +319,6 @@ function getConditionalFormatting(val, colIdx, headerRow, campaignName = '') {
         const isCRC = campaignUpper.includes('CRC_QC') && !campaignUpper.includes('CRCC');
 
         if (isCRC) {
-            // Parámetros para CRC_QC (Comcast Equipment)
             if (cleanVal >= 5.0) {
                 return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;';
             } else if (cleanVal >= 3.0) {
@@ -298,7 +327,6 @@ function getConditionalFormatting(val, colIdx, headerRow, campaignName = '') {
                 return 'background-color: rgba(239, 68, 68, 0.18); color: #f87171; font-weight: 700;';
             }
         } else {
-            // Parámetros para las otras LOBs (CRCC_QC, Earthlink_QC, Optimum_QC)
             if (cleanVal >= 2.0) {
                 return 'background-color: rgba(16, 185, 129, 0.18); color: #34d399; font-weight: 700;';
             } else if (cleanVal >= 1.0) {
