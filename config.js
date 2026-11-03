@@ -14,10 +14,14 @@ const CONFIG = {
             name: 'CRC_QC (Comcast Equipment)',
             spreadsheetId: '1wm9lypH0cB_3S13guFkdRf40x8nR8I8K43cWG6tnQkA'
         },
+        /* =========================================================================
+           TEMPORALMENTE INACTIVO POR CIERRE OPERATIVO:
+           Descomentar este bloque cuando se reanuden las llamadas de CRCC.
         {
             name: 'CRCC_QC (Comcast First Party)',
             spreadsheetId: '1SjglUQ9G2-JR9x-kUdaDPKr3cTVzRTjjkuT4W9Gpe2Y'
         },
+        ========================================================================= */
         {
             name: 'Earthlink_QC (Earthlink Equipment)',
             spreadsheetId: '1r2sMMmlboQzoVcLPWFFhgcmzPatFQ5BhoI1mirjWiQc'
